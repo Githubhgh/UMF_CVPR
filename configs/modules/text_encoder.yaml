@@ -1,0 +1,8 @@
+text_encoder:
+  # Optional: umf_clip, umf_bert
+  target: umf.models.architectures.umf_clip.UmfTextEncoder
+  params:
+    finetune: false # if false, model weights are frozen
+    last_hidden_state: false # if true, the last hidden state is used as the text embedding
+    latent_dim: ${model.latent_dim}
+    modelpath: ${model.clip_path}

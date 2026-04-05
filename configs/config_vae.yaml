@@ -1,0 +1,86 @@
+NAME: vae
+DEBUG: False # Debug mode
+ACCELERATOR: 'gpu' # Devices optioncal: “cpu”, “gpu”, “tpu”, “ipu”, “hpu”, “mps, “auto”
+DEVICE: [0] # Index of gpus eg. [0] or [0,1,2,3]
+
+# Training configuration
+TRAIN:
+  #---------------------------------
+  STAGE: vae # stage "vae" or "diffusion", "vae_diffusion"
+  #---------------------------------
+  ABLATION:
+    SKIP_CONNECT: True
+    PE_TYPE: umf
+    DIFF_PE_TYPE: umf
+  DATASETS: ['interhuman'] # Training datasets
+  NUM_WORKERS: 11 # Number of workers
+  BATCH_SIZE: 128 # Size of batches
+  START_EPOCH: 0 # Start epochMMOTIONENCODER
+  END_EPOCH: 6000 # End epoch
+  RESUME:   # Resume training from this path
+  PRETRAINED_VAE: ''
+  OPTIM:
+    TYPE: AdamW # Optimizer type
+    LR: 1e-4 # Learning rate
+
+  AGD_ENABLED: True  
+  AGD_HM_LOSS_SCALE: 1 
+
+# Evaluating Configuration
+EVAL:
+  DATASETS: ['interhuman'] # Evaluating datasets
+  BATCH_SIZE: 96 # Evaluating Batch size
+  SPLIT: test
+
+# Test Configuration
+TEST:
+  CHECKPOINTS: '__SET_YOUR_VAE_CKPT_PATH__'  # path to trained VAE checkpoint for testing
+  DATASETS: ['interhuman'] # training datasets
+  SPLIT: test
+  BATCH_SIZE: 96 # training Batch size
+  MEAN: False
+  NUM_SAMPLES: 1
+  FACT: 1
+
+# Datasets Configuration
+DATASET:
+  JOINT_TYPE: 'humanml3d' # join type
+METRIC:
+  TYPE: ['TM2TMetrics', 'TM2TMetrics_HM']
+# Losses Configuration
+LOSS:
+  TYPE: umf # Losses type
+  LAMBDA_LATENT: 1.0e-5 # Lambda for latent Losses
+  LAMBDA_KL: 1.0e-4 # Lambda for kl Losses
+  LAMBDA_REC: 1.0 # Lambda for reconstruction Losses
+  LAMBDA_GEN: 1.0 # Lambda for text-motion generation losses
+  LAMBDA_CROSS: 1.0 # Lambda for reconstruction Losses
+  LAMBDA_CYCLE: 0.0 # Lambda for cycle Losses
+  LAMBDA_PRIOR: 0.0
+  DIST_SYNC_ON_STEP: False # Sync Losses on step when distributed trained
+
+# Model Configuration
+model:
+  vae: true # whether vae model
+  model_type: umf # model type
+  condition: 'text'
+  # Keep these aligned with configs/modules/motion_vae.yaml
+  latent_dim: [16, 64] # latent dimension
+  ff_size: 1024 #
+  num_layers: 9 # number of layers
+  num_head: 4 # number of head layers
+  droupout: 0.1 # dropout rate
+  activation: gelu # activation type
+  guidance_scale: 3 #
+  guidance_uncondp: 0.1 # 0.1 0.25
+
+# Logger configuration
+LOGGER:
+  SACE_CHECKPOINT_EPOCH: 50
+  LOG_EVERY_STEPS: 1
+  VAL_EVERY_STEPS: 25
+  TENSORBOARD: True
+  WANDB:
+    PROJECT: 'UMF'
+    OFFLINE: False
+    RESUME_ID: null

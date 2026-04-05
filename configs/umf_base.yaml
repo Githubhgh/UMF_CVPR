@@ -1,0 +1,29 @@
+PATHS:
+  # Global output roots
+  EXPERIMENT_FOLDER: "./experiments"
+  RESULT_FOLDER: "./results"
+
+  # Core dataset/assets roots — update these to match your local layout
+  HUMANML3D_ROOT: "./data/HUMANML3D"
+  WORD_VECTORIZER_ROOT: "./data/glove"
+  T2M_DEPS_ROOT: "./deps"
+
+  # InterHuman loading
+  INTERHUMAN_DATASET_CFG: "configs/datasets.yaml"
+  INTERHUMAN_DATA_ROOT: "./data/InterHuman/motions_processed"
+  INTERHUMAN_EVAL_MODEL: "datasets/InterHuman/eval_model.yaml"
+
+  # HumanML3D mixed-training explicit paths
+  HML3D_DATA_ROOT: "./data/HUMANML3D"
+  HML3D_GLOVE_ROOT: "./data/glove"
+  HML3D_MEAN_ORG_PATH: "./assets/runtime/humanml3d_meta/mean_org.npy"
+  HML3D_STD_ORG_PATH: "./assets/runtime/humanml3d_meta/std_org.npy"
+  HML3D_TEXT_DIR: "./data/HUMANML3D/texts"
+  HML3D_MOTION_DIR: "./data/HUMANML3D/new_joint_vecs"
+
+  # Optional checkpoint overrides: keep these sentinels to follow stage configs.
+  PRETRAINED_VAE: "__FROM_STAGE_CONFIG__"
+  PRETRAINED_INDI: "__FROM_STAGE_CONFIG__"
+  PRETRAINED_REAC: "__FROM_STAGE_CONFIG__"
+  PRETRAINED: "__FROM_STAGE_CONFIG__"
+  TEST_CHECKPOINTS: "__FROM_STAGE_CONFIG__"

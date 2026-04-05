@@ -1,0 +1,139 @@
+[project]
+name = "UMF"
+version = "0.1.0"
+description = "Unified Number-Free Text-to-Motion Generation Via Flow Matching"
+requires-python = ">=3.9,<3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Guanhe Huang", email = "guanhe.huang@kcl.ac.uk"},
+    {name = "Oya Celiktutan"},
+]
+
+[project.urls]
+Homepage = "https://githubhgh.github.io/umf/"
+Repository = "https://github.com/Githubhgh/UMF_CVPR"
+Paper = "https://arxiv.org/abs/2603.27040"
+
+# This dependency list strictly follows the provided Conda/Pip Python package set.
+# System-level C/C++ binaries that uv cannot install (e.g., libgcc, cuda-libraries, ffmpeg binaries) are intentionally excluded.
+dependencies = [
+    # --- Core scientific computing (pinned versions) ---
+    "numpy==1.26.4",  # Fixed: numpy 1.23.1 had an OpenBLAS ILP64 issue for matrix multiplication with n>=128.
+    "pandas==2.2.0",
+    "scipy==1.11.1",
+    "matplotlib==3.2.0", # Very old; upgrade if your compatibility constraints allow it.
+    "scikit-learn==1.6.1",
+    "scikit-image==0.22.0",
+    "sympy==1.14.0",
+    "networkx==3.2.1",
+    "pillow==11.3.0",
+    "aitviewer",
+
+    # --- Deep learning core (B200 target, CUDA wheel source configured below) ---
+    "torch>=2.4.0",
+    "torchvision",
+    "torchaudio",
+    "pytorch-lightning==2.0.0",
+    "lightning==1.9.1",
+    "torchmetrics==0.7.0",
+    "accelerate",
+    
+    # --- Hugging Face ecosystem ---
+    "transformers==4.38.2",
+    "diffusers==0.28.0",
+    "openai-clip==1.0.1",
+    "huggingface-hub==0.22.2",
+    "tokenizers==0.15.2",
+    "safetensors==0.5.3",
+    "torchdiffeq==0.2.5",
+
+    # --- 3D / graphics / vision ---
+    "opencv-python==4.9.0.80",
+    "opencv-contrib-python-headless==4.9.0.80",
+    #"pytorch3d @ git+https://github.com/facebookresearch/pytorch3d.git@stable", # Warning: this may require source build.
+    "trimesh==3.18.3",
+    "pyglet==2.0.17",
+    "chumpy==0.70",
+    "smplx==0.1.28",
+    "roma==1.5.2.1",
+    "pyrender",
+    "pyopengl",
+    
+    # --- Video and image processing ---
+    "moviepy==1.0.3",
+    "imageio==2.33.1",
+    "imageio-ffmpeg==0.4.9",
+    "scikit-video==1.1.11",
+    "simpleitk==2.5.2",
+    "tifffile==2024.8.30",
+    "google-generativeai==0.8.6",
+    "av",
+
+    # --- Utilities and misc ---
+    "tqdm==4.67.1",
+    "pyyaml==6.0.3",
+    "wandb==0.16.3",
+    "tensorboard>=2.16.0",
+    "ipython==8.12.0",
+    "jupyter==1.0.0",
+    "notebook",
+    "einops==0.6.1",
+    "lpips",
+    "rich==14.0.0",
+    "click==8.1.8",
+    "typer==0.7.0",
+    "ninja==1.11.1.1",
+    "psutil<7.0.0",
+    "protobuf==4.25.8",
+    "pydantic==1.10.26",
+    "termcolor==1.1.0",
+    "joblib==1.5.0",
+    "natsort",
+    "packaging==24.2",
+    "fsspec==2023.12.2",
+    
+    # --- Keep smaller dependencies from the original Pip list ---
+    "aiohttp==3.11.18",
+    "beautifulsoup4==4.13.4",
+    "ftfy==6.1.3",
+    "gdown",
+    "httplib2==0.31.0",
+    "humanize==4.12.3",
+    "importlib-metadata==8.6.1",
+    "jinja2==3.1.3",
+    "markdown==3.5.2",
+    "markupsafe==3.0.2",
+    "omegaconf==2.3.0",
+    "requests==2.32.5",
+    "urllib3==2.6.2",
+    "websocket-client==1.9.0",
+    "websockets==11.0.3",
+    "werkzeug==3.0.1",
+    "yacs==0.1.8",
+    "zipp==3.21.0"
+]
+
+# --- 1. Resolve legacy chumpy build issues ---
+[tool.uv.extra-build-dependencies]
+chumpy = ["pip", "wheel"]
+
+# --- 2. Force a dedicated PyTorch CUDA index for B200-target installs ---
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+# --- 3. Bind torch-related packages to that index ---
+[tool.uv.sources]
+torch = [{ index = "pytorch-cu128" }]
+torchvision = [{ index = "pytorch-cu128" }]
+torchaudio = [{ index = "pytorch-cu128" }]
+
+[tool.uv]
+environments = ["sys_platform == 'linux'"]
+
+# Handling nvidia-* packages:
+# Official Torch 2.x wheels already declare required nvidia-* dependencies.
+# To avoid conflicts, we do not pin packages such as nvidia-cuda-runtime-cu12 explicitly,
+# and rely on torch>=2.4.0 to resolve the correct CUDA runtime dependencies.
+#uv pip install --force-reinstall "setuptools>=65,<75"

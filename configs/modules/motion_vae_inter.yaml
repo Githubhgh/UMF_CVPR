@@ -1,0 +1,18 @@
+motion_vae_inter:
+  # Optional: umf_vae, vposert_vae
+  target: umf.models.architectures.umf_vae.UmfVae
+  params:
+    arch: 'encoder_decoder'
+    ff_size: 1024
+    hidden_dim: 512
+    num_layers: 9
+    num_heads: 4
+    dropout: 0.1
+    normalize_before: false
+    activation: 'gelu'
+    norm_eps: 1e-5
+    norm_post: true
+    position_embedding: 'learned'
+    latent_dim: [16, 64]
+    nfeats: 524
+    ablation: ${TRAIN.ABLATION}

@@ -1,0 +1,128 @@
+####################################
+# The following are general settings
+####################################
+
+# Experiment name, more details in Section 'Experiment Name Explanation'
+NAME: sflow
+# Debug mode. Set to True will enter the debug mode, then the program will
+# 1. use a tiny dataset for trianing and evaluation
+# 2. validate more intensively
+# 3. will not use `wandb logger`
+DEBUG: False
+# Devices. Optional: “cpu”, “gpu”
+ACCELERATOR: 'gpu'
+# Index of GPUs eg. [0] or [0,1,2,3]
+DEVICE: [0]
+
+#####################################
+# The following are training settings
+#####################################
+TRAIN:
+  # Model stage. Optional: "vae", "diffusion"
+  STAGE: diffusion
+  # Diffusion sub-stage mode. Stage3 must use 'react'
+  DIFFUSION_MODE: react
+  # Training dataset name
+  DATASETS: ['interhuman']
+  # Number of dataloader workers
+  NUM_WORKERS: 8
+  # Size of batches
+  BATCH_SIZE: 128
+  # Total epochs for training
+  END_EPOCH: 2000
+
+  PYRAMID_GAMMA: -0.2
+  PSTAGES: 2
+
+  # AGD (Alternating Gradient Descent) Configuration
+  # Alternating Gradient Descent configuration for heterogeneous joint training
+  AGD_ENABLED: false  # react-only path: IH-only, AGD disabled
+  AGD_HM_LOSS_SCALE: 0.1  # HM-batch loss scale (equivalent to 1/10 LR, preserves single-person motion knowledge)
+
+  RESUME:  # Resume training from this path
+  PRETRAINED_VAE: '__SET_YOUR_VAE_CKPT_PATH__'  # path to Stage-1 VAE checkpoint
+  PRETRAINED_INDI: '__SET_YOUR_INDI_CKPT_PATH__'  # required: path to Stage-2 P-Flow checkpoint
+  PRETRAINED_REAC: ''  # optional: reac pretrained checkpoint
+  OPTIM:
+    TYPE: AdamW # Optimizer type
+    LR: 1e-4 # Learning rate
+  # Ablation study configurations.
+  ABLATION:
+    SKIP_CONNECT: True
+    PE_TYPE: umf
+    DIFF_PE_TYPE: umf
+
+#####################################
+# The following are validation settings
+#####################################
+EVAL:
+  DATASETS: ['interhuman'] # Evaluating datasets
+  BATCH_SIZE: 96 # Evaluating Batch size
+  SPLIT: test
+
+#####################################
+# The following are testing settings
+#####################################
+TEST:
+  CHECKPOINTS: ""
+  DATASETS: ['interhuman'] # training datasets
+  SPLIT: test
+  BATCH_SIZE: 96 # training Batch size
+  MEAN: False
+  NUM_SAMPLES: 100
+  FACT: 1
+
+#####################################
+# The following are basic datasets settings
+#####################################
+DATASET:
+  JOINT_TYPE: 'humanml3d' # join type
+
+#####################################
+# The following are metric settings
+#####################################
+METRIC:
+  #TYPE: ['TemosMetric', 'TM2TMetrics', 'TM2TMetrics_HM']
+  TYPE: ['TM2TMetrics', 'TM2TMetrics_HM']
+#####################################
+# The following are training losses settings
+#####################################
+LOSS:
+  TYPE: umf # Losses type
+  LAMBDA_LATENT: 1.0e-5 # Lambda for latent Losses
+  LAMBDA_KL: 1.0e-4 # Lambda for kl Losses
+  LAMBDA_REC: 1.0 # Lambda for reconstruction Losses
+  LAMBDA_GEN: 1.0 # Lambda for text-motion generation losses
+  LAMBDA_CROSS: 1.0 # Lambda for reconstruction Losses
+  LAMBDA_CYCLE: 0.0 # Lambda for cycle Losses
+  LAMBDA_PRIOR: 0.0
+  DIST_SYNC_ON_STEP: False # Sync Losses on step when distributed trained
+
+#####################################
+# The following are basic model settings
+#####################################
+model:
+  vae: true # whether vae model
+  model_type: umf # model type
+  condition: 'text'
+  latent_dim: [16, 64] # latent dimension
+  ff_size: 1024 #
+  num_layers: 9 # number of layers
+  num_head: 4 # number of head layers
+  droupout: 0.1 # dropout rate
+  activation: gelu # activation type
+  guidance_scale: 3 # 7.5
+  guidance_uncondp: 0.1 # 0.1 0.25
+
+#####################################
+# The following are loggers settings
+#####################################
+LOGGER:
+  SACE_CHECKPOINT_EPOCH: 50
+  LOG_EVERY_STEPS: 1
+  VAL_EVERY_STEPS: 10
+  TENSORBOARD: True
+  WANDB:
+    PROJECT: 'UMF'
+    OFFLINE: False
+    RESUME_ID: ''

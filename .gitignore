@@ -1,0 +1,40 @@
+./experiments/*
+datasets/*
+deps/*
+
+
+results/*
+ait_save/*
+tmp/*
+case_study/*
+data_loaders/interhuman/interclip.ckpt
+./data/*
+eval_model/interclip.ckpt
+
+# Python build/cache artifacts
+__pycache__/
+**/__pycache__/
+*.pyc
+
+# Notebook autosave directories
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+
+# IDE/editor settings
+.vscode/
+.idea/
+.roo/
+
+# Local env and build artifacts
+.venv/
+*.egg-info/
+build/
+dist/
+
+# Logs and trackers
+wandb/
+lightning_logs/
+*.log
+
+# Local docs/archives
+*.pdf
