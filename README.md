@@ -114,7 +114,7 @@ Expected directory structure:
 
 | Checkpoint | Location | Download |
 |------------|----------|----------|
-| Evaluation (`interclip.ckpt`) | `./eval_model/interclip.ckpt` | — |
+| Evaluation (`interclip.ckpt`) | `./eval_model/interclip.ckpt` | [InterHuman Source](https://github.com/tr3e/InterGen) |
 | UMF | update path in config | [Google Drive](https://drive.google.com/file/d/1jmGD3wvXcig43uyV63BeqZPjFxd3uBV-/view?usp=drive_link) |
 | VAE | update path in config | [Google Drive](https://drive.google.com/file/d/14OCETIMfrZf-ZCPTq4xWMhNK5w7dY7Eu/view?usp=sharing) |
 
