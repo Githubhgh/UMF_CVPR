@@ -21,7 +21,7 @@ __pycache__/
 **/.ipynb_checkpoints/
 
 # IDE/editor settings
-.vscode/
+#.vscode/
 .idea/
 .roo/
 
