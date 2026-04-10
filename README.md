@@ -10,7 +10,7 @@
       <img src="https://img.shields.io/badge/Project-Page-green.svg" alt="Project Page">
     </a>
     <a href="LICENSE">
-      <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License">
+      <img src="https://img.shields.io/badge/License-CC--BY--NC--4.0-lightgrey.svg" alt="CC BY-NC 4.0 License">
     </a>
     <a href="#">
       <img src="https://img.shields.io/badge/Python-3.9+-blue.svg" alt="Python 3.9+">
@@ -256,4 +256,4 @@ Please follow their respective licenses when using this code.
 
 ## 📄 License
 
-This project is distributed under the [MIT License](LICENSE).
+This project is distributed under the [CC BY-NC 4.0 License](LICENSE).
