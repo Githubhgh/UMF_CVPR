@@ -220,10 +220,11 @@ python test.py --cfg configs/config_sflow.yaml --cfg_assets configs/assets.yaml
 If you find this work useful, please cite our paper:
 
 ```bibtex
-@article{huang2026unified,
+@inproceedings{huang2026unified,
   title={Unified Number-Free Text-to-Motion Generation Via Flow Matching},
   author={Huang, Guanhe and Celiktutan, Oya},
-  journal={arXiv preprint arXiv:2603.27040},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+  pages={23570--23580},
   year={2026}
 }
 ```
