@@ -43,6 +43,13 @@ TRAIN:
   PRETRAINED_VAE: '__SET_YOUR_VAE_CKPT_PATH__'  # path to Stage-1 VAE checkpoint
   PRETRAINED_INDI: '__SET_YOUR_INDI_CKPT_PATH__'  # required: path to Stage-2 P-Flow checkpoint
   PRETRAINED_REAC: ''  # optional: reac pretrained checkpoint
+  BURN_OUT:
+    ENABLED: true
+    INDI_LR_SCALE: 0.1
+    TUNE_INDI_IH_CONDITIONING: false
+    ENABLE_INDI_LOSS: true
+    INDI_LOSS_WEIGHT: 0.5
+    FREEZE_T2M_EXPERT: true
   OPTIM:
     TYPE: AdamW # Optimizer type
     LR: 1e-4 # Learning rate

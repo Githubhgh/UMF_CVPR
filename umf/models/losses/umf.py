@@ -22,6 +22,14 @@ class UMFLosses(Metric):
         self.cfg = cfg
         self.predict_epsilon = cfg.TRAIN.ABLATION.PREDICT_EPSILON
         self.stage = cfg.TRAIN.STAGE
+        burn_out_cfg = getattr(cfg.TRAIN, "BURN_OUT", None)
+        self.burn_out_enabled = bool(getattr(burn_out_cfg, "ENABLED", False))
+        self.burn_out_enable_indi_loss = bool(
+            getattr(burn_out_cfg, "ENABLE_INDI_LOSS", False)
+        )
+        self.burn_out_indi_loss_weight = float(
+            getattr(burn_out_cfg, "INDI_LOSS_WEIGHT", 1.0)
+        )
 
         losses = []
 
@@ -124,6 +132,12 @@ class UMFLosses(Metric):
                 if  rs_set['react_training']:  
                     total += self._update_loss("inst_loss", rs_set['noise_pred'],
                                            rs_set['noise'])
+                    if self.burn_out_enabled and self.burn_out_enable_indi_loss:
+                        total += self.burn_out_indi_loss_weight * self._update_loss(
+                            "inst_indiloss",
+                            rs_set['noise_pred_indi'],
+                            rs_set['noise_indi'],
+                        )
                 else:
                     total += self._update_loss("inst_indiloss", rs_set['noise_pred_indi'],
                                            rs_set['noise_indi'])

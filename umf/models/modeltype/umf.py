@@ -5,6 +5,7 @@ from torch.optim import AdamW
 from torchmetrics import MetricCollection
 import time
 from umf.config import instantiate_from_config
+from omegaconf import ListConfig
 from umf.models.architectures import (
     t2m_motionenc,
     t2m_textenc,
@@ -73,6 +74,17 @@ class UMF(BaseModel):
         self.react_training = (
             str(self.stage).lower() == "diffusion"
             and self.diffusion_mode == "react"
+        )
+        burn_out_cfg = getattr(cfg.TRAIN, "BURN_OUT", None)
+        self.burn_out_enabled = bool(getattr(burn_out_cfg, "ENABLED", False))
+        self.burn_out_indi_lr_scale = float(
+            getattr(burn_out_cfg, "INDI_LR_SCALE", 1.0)
+        )
+        self.burn_out_tune_indi_ih_conditioning = bool(
+            getattr(burn_out_cfg, "TUNE_INDI_IH_CONDITIONING", False)
+        )
+        self.burn_out_freeze_t2m_expert = bool(
+            getattr(burn_out_cfg, "FREEZE_T2M_EXPERT", True)
         )
         self.condition = 'text'
         self.is_vae = cfg.model.vae
@@ -194,9 +206,14 @@ class UMF(BaseModel):
         if self.condition in ["text", "text_uncond"]:
             self._get_t2m_evaluator(cfg)
 
+        if self.stage == "diffusion":
+            self._set_diffusion_trainable_modules()
+
         if cfg.TRAIN.OPTIM.TYPE.lower() == "adamw":
-            self.optimizer = AdamW(lr=cfg.TRAIN.OPTIM.LR,
-                                   params=self.parameters())
+            self.optimizer = AdamW(
+                params=self._build_optimizer_param_groups(cfg.TRAIN.OPTIM.LR),
+                lr=cfg.TRAIN.OPTIM.LR,
+            )
         else:
             raise NotImplementedError(
                 "Do not support other optimizer for now.")
@@ -317,15 +334,7 @@ class UMF(BaseModel):
             eval_device = torch.device("cpu")
             if str(getattr(cfg, "ACCELERATOR", "")).lower() == "gpu" and torch.cuda.is_available():
                 raw_devices = getattr(cfg, "DEVICE", [0])
-                if isinstance(raw_devices, (list, tuple)):
-                    if not raw_devices:
-                        gpu_index = 0
-                    else:
-                        local_rank = int(os.environ.get("LOCAL_RANK", "0"))
-                        local_rank = min(local_rank, len(raw_devices) - 1)
-                        gpu_index = int(raw_devices[local_rank])
-                else:
-                    gpu_index = int(raw_devices)
+                gpu_index = self._resolve_eval_gpu_index(raw_devices)
                 eval_device = torch.device(f"cuda:{gpu_index}")
             self.evalution_wrapper_ih = EvaluatorModelWrapper(
                 ih_eval_model,
@@ -377,6 +386,16 @@ class UMF(BaseModel):
             p.requires_grad = False
             # Keep this placement for backward-compatible behavior in current release.
         return None
+
+    @staticmethod
+    def _resolve_eval_gpu_index(raw_devices):
+        if isinstance(raw_devices, (list, tuple, ListConfig)):
+            if not raw_devices:
+                return 0
+            local_rank = int(os.environ.get("LOCAL_RANK", "0"))
+            local_rank = min(local_rank, len(raw_devices) - 1)
+            return int(raw_devices[local_rank])
+        return int(raw_devices)
 
 
     def sample_block_noise(self, bs, ch, height, width, eps=1e-6):
@@ -793,6 +812,44 @@ class UMF(BaseModel):
             str(self.stage).lower() == "diffusion" and self.diffusion_mode == "react"
         )
 
+    def _build_optimizer_param_groups(self, base_lr):
+        trainable_params = [param for param in self.parameters() if param.requires_grad]
+        if not trainable_params:
+            raise ValueError("No trainable parameters available for optimizer setup.")
+
+        burn_out_active = self.react_training and getattr(self, "burn_out_enabled", False)
+        if not burn_out_active:
+            return [{"params": trainable_params, "lr": base_lr}]
+
+        indi_params = []
+        indi_param_ids = set()
+        indi_modules = [self.indi_denoiser]
+        if getattr(self, "burn_out_tune_indi_ih_conditioning", False):
+            indi_modules.extend([
+                self.clipTransEncoder_ih,
+                self.clip_ln_ih,
+                self.dataset_embedding,
+            ])
+
+        for module in indi_modules:
+            for param in module.parameters():
+                if param.requires_grad and id(param) not in indi_param_ids:
+                    indi_params.append(param)
+                    indi_param_ids.add(id(param))
+
+        base_params = [
+            param for param in trainable_params if id(param) not in indi_param_ids
+        ]
+        param_groups = []
+        if base_params:
+            param_groups.append({"params": base_params, "lr": base_lr})
+        if indi_params:
+            param_groups.append({
+                "params": indi_params,
+                "lr": base_lr * getattr(self, "burn_out_indi_lr_scale", 1.0),
+            })
+        return param_groups
+
     def _set_diffusion_trainable_modules(self):
         if not self.react_training:
             set_requires_grad(self.reac_denoiser, False)
@@ -801,13 +858,45 @@ class UMF(BaseModel):
             set_requires_grad(self.clip_ln_react, False)
             return
 
+        burn_out_active = self.react_training and getattr(self, "burn_out_enabled", False)
+
+        set_requires_grad(self.clipTransEncoder_t2m, False)
+        set_requires_grad(self.clip_ln_t2m, False)
+        set_requires_grad(self.dataset_embedding, False)
+
+        if burn_out_active:
+            set_requires_grad(self.reac_denoiser, True)
+            set_requires_grad(self.indi_denoiser, True)
+            set_requires_grad(
+                self.clipTransEncoder_ih,
+                getattr(self, "burn_out_tune_indi_ih_conditioning", False),
+            )
+            set_requires_grad(
+                self.clip_ln_ih,
+                getattr(self, "burn_out_tune_indi_ih_conditioning", False),
+            )
+            set_requires_grad(
+                self.dataset_embedding,
+                getattr(self, "burn_out_tune_indi_ih_conditioning", False),
+            )
+            set_requires_grad(self.clipTransEncoder_react, True)
+            set_requires_grad(self.clip_ln_react, True)
+
+            if getattr(self, "burn_out_freeze_t2m_expert", True):
+                for attr_name in (
+                    "expert_t2m_blocks",
+                    "expert_t2m_norm",
+                    "latent_post_t2m",
+                ):
+                    if hasattr(self.indi_denoiser, attr_name):
+                        set_requires_grad(getattr(self.indi_denoiser, attr_name), False)
+            return
+
         set_requires_grad(self.reac_denoiser, True)
         set_requires_grad(self.indi_denoiser, False)
         self.indi_denoiser.eval()
         set_requires_grad(self.clipTransEncoder_ih, False)
         set_requires_grad(self.clip_ln_ih, False)
-        set_requires_grad(self.clipTransEncoder_t2m, False)
-        set_requires_grad(self.clip_ln_t2m, False)
         set_requires_grad(self.clipTransEncoder_react, True)
         set_requires_grad(self.clip_ln_react, True)
 

@@ -1,6 +1,6 @@
 <div align="center">
   <h1>Unified Number-Free Text-to-Motion Generation <br> Via Flow Matching</h1>
-  <p><strong>CVPR 2026</strong> &nbsp;|&nbsp; <strong>Guanhe Huang, Oya Celiktutan</strong></p>
+  <p><strong>CVPR 2026 Highlight</strong> &nbsp;|&nbsp; <strong>Guanhe Huang, Oya Celiktutan</strong></p>
 
   <p>
     <a href="https://arxiv.org/abs/2603.27040">
